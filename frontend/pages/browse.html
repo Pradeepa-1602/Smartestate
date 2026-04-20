@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EstateElite — Browse Properties</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+<div class="app-shell">
+  <div id="sidebarWrap"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Browse Properties</h1>
+        <p class="page-sub" id="countSub">Loading…</p>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Search + Filters -->
+      <div class="search-wrap mb-3">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by title or city (e.g. Chennai, Anna Nagar)…"/>
+      </div>
+
+      <div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        <select class="form-select" id="typeFilter" style="width:auto">
+          <option value="ALL">All Types</option>
+          <option value="SALE">For Sale</option>
+          <option value="RENT">For Rent</option>
+        </select>
+        <select class="form-select" id="priceFilter" style="width:auto">
+          <option value="ALL">Any Price</option>
+          <option value="LOW">Under ₹50L</option>
+          <option value="MID">₹50L – ₹1Cr</option>
+          <option value="HIGH">Above ₹1Cr</option>
+        </select>
+        <select class="form-select" id="sortFilter" style="width:auto">
+          <option value="NEWEST">Newest First</option>
+          <option value="PRICE_ASC">Price: Low → High</option>
+          <option value="PRICE_DESC">Price: High → Low</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" id="clearFilters" style="border-radius:8px;">Clear filters</button>
+      </div>
+
+      <div id="propsContainer">
+        <div class="d-flex align-items-center gap-3 py-5 justify-content-center text-secondary">
+          <div class="spinner-gold"></div> <span>Loading properties…</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Enquiry Modal -->
+<div class="modal fade" id="enquiryModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Send Enquiry</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="enquiryPropSummary" class="mb-3 p-3" style="background:var(--pearl);border-radius:10px;"></div>
+        <div id="enquirySent" class="d-none text-center py-3">
+          <div style="font-size:2.5rem;">✅</div>
+          <div style="font-weight:500;margin-top:.5rem;font-family:'Cormorant Garamond',serif;font-size:1.2rem;">Enquiry sent!</div>
+          <p style="color:var(--stone);font-size:.88rem;margin-top:.4rem;">The owner will contact you shortly.</p>
+        </div>
+        <div id="enquiryForm">
+          <div class="mb-3">
+            <label class="form-label">Your Name</label>
+            <input class="form-control" id="eqName" placeholder="Your name"/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            <input class="form-control" id="eqPhone" placeholder="+91 98400 00000"/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" id="eqMsg" placeholder="Hi, I am interested in this property. Please share more details…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="enquiryFooter">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-gold" style="width:auto;padding:.7rem 1.5rem;" id="sendEnquiryBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Enquiry
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+  const user = Auth.checkRole('buyer');
+  let allProps = [];
+  let currentEnquiryProp = null;
+
+  if (user) {
+    initSidebar(user, 'browse');
+    loadProperties();
+  }
+
+  async function loadProperties() {
+    const { ok, data } = await apiFetch('/properties');
+    allProps = ok && Array.isArray(data) ? data : [];
+    renderProperties();
+  }
+
+  function renderProperties() {
+    const q     = document.getElementById('searchInput').value.toLowerCase();
+    const type  = document.getElementById('typeFilter').value;
+    const price = document.getElementById('priceFilter').value;
+    const sort  = document.getElementById('sortFilter').value;
+
+    let filtered = allProps.filter(p => {
+      const mQ = !q || p.title?.toLowerCase().includes(q) || p.location?.toLowerCase().includes(q);
+      const mT = type === 'ALL' || p.property_type === type;
+      const v  = Number(p.price);
+      const mP = price === 'ALL'
+        || (price === 'LOW'  && v < 5000000)
+        || (price === 'MID'  && v >= 5000000 && v < 10000000)
+        || (price === 'HIGH' && v >= 10000000);
+      return mQ && mT && mP;
+    });
+
+    if (sort === 'PRICE_ASC')  filtered.sort((a, b) => Number(a.price) - Number(b.price));
+    if (sort === 'PRICE_DESC') filtered.sort((a, b) => Number(b.price) - Number(a.price));
+
+    document.getElementById('countSub').textContent =
+      `${filtered.length} propert${filtered.length !== 1 ? 'ies' : 'y'} found`;
+
+    const c = document.getElementById('propsContainer');
+    if (filtered.length === 0) {
+      c.innerHTML = `<div class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <h3>No properties found</h3><p>Try different search terms or clear your filters.</p></div>`;
+    } else {
+      c.innerHTML = `<div class="row g-3">
+        ${filtered.map((p, i) => `<div class="col-md-4">${buildPropCard(p, { showWish: true, showEnquire: true, animDelay: i })}</div>`).join('')}
+      </div>`;
+    }
+  }
+
+  // Enquiry
+  function openEnquiry(prop) {
+    currentEnquiryProp = prop;
+    document.getElementById('enquiryPropSummary').innerHTML = `
+      <div style="font-weight:500;font-size:.96rem;">${prop.title}</div>
+      <div style="color:var(--stone);font-size:.82rem;margin-top:2px;">${prop.location}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--gold-dark);margin-top:4px;">₹${Number(prop.price).toLocaleString('en-IN')}</div>`;
+    document.getElementById('enquiryForm').classList.remove('d-none');
+    document.getElementById('enquirySent').classList.add('d-none');
+    document.getElementById('enquiryFooter').classList.remove('d-none');
+    new bootstrap.Modal(document.getElementById('enquiryModal')).show();
+  }
+
+ document.getElementById('sendEnquiryBtn').addEventListener('click', async () => {
+
+  const name  = document.getElementById('eqName').value.trim();
+  const phone = document.getElementById('eqPhone').value.trim();
+  const msg   = document.getElementById('eqMsg').value.trim();
+
+  if (!name || !phone) {
+    showToast('Please enter name and phone', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/api/enquiries/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        property_id: currentEnquiryProp.property_id,
+        buyer_id: user.user_id,   // ✅ IMPORTANT FIX
+        name,
+        phone,
+        message: msg
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.log(data);
+      showToast(data.message || "Failed to send enquiry", "error");
+      return;
+    }
+
+    showToast("Enquiry sent successfully!");
+
+    document.getElementById('enquiryForm').classList.add('d-none');
+    document.getElementById('enquirySent').classList.remove('d-none');
+
+    setTimeout(() => {
+      bootstrap.Modal.getInstance(document.getElementById('enquiryModal')).hide();
+    }, 1500);
+
+  } catch (err) {
+    console.log(err);
+    showToast("Backend not running or API error", "error");
+  }
+}); 
+
+  document.getElementById('searchInput').addEventListener('input', renderProperties);
+  document.getElementById('typeFilter').addEventListener('change', renderProperties);
+  document.getElementById('priceFilter').addEventListener('change', renderProperties);
+  document.getElementById('sortFilter').addEventListener('change', renderProperties);
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = 'ALL';
+    document.getElementById('priceFilter').value = 'ALL';
+    document.getElementById('sortFilter').value = 'NEWEST';
+    renderProperties();
+  });
+</script>
+</body>
+</html>
