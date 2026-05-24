@@ -2,7 +2,7 @@
    EstateElite — Shared Utilities (utils.js)
    ========================================================= */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://http://35.154.242.167:5000/api';
 
 /* ── Auth helpers ── */
 const Auth = {
