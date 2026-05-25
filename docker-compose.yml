@@ -1,30 +1,28 @@
-version: '3.9'
-
 services:
 
   frontend:
     build: ./frontend
-    container_name: smartestate-frontend
-    restart: always
     ports:
       - "80:80"
     depends_on:
       - backend
 
   backend:
-    build: ./backend
-    container_name: smartestate-backend
-    restart: always
-    ports:
-      - "5000:5000"
-    env_file:
-      - ./backend/.env.docker
-    depends_on:
-      - mysql
+  build: ./backend
+  container_name: smartestate-backend
+  restart: always
+  ports:
+    - "5000:5000"
+  env_file:
+    - ./backend/.env
+  environment:
+    DB_HOST: mysql
+  depends_on:
+    mysql:
+      condition: service_healthy
 
   mysql:
     image: mysql:8
-    container_name: smartestate-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: Pradeepa@2006

@@ -1,13 +1,12 @@
 /* =========================================================
    EstateElite — Shared Utilities (utils.js)
-   ========================================================= */
 
+/* ── Auth helpers ── */
 const API_BASE =
   window.location.hostname === "localhost"
     ? "http://localhost:5000/api"
     : `${window.location.origin}/api`;
     
-/* ── Auth helpers ── */
 const Auth = {
   save(data) { localStorage.setItem('ee_user', JSON.stringify(data)); },
   get()      { try { return JSON.parse(localStorage.getItem('ee_user')); } catch { return null; } },
@@ -173,7 +172,7 @@ function buildPropCard(prop, opts = {}) {
     <div class="prop-card" style="animation-delay:${animDelay * 80}ms">
       <div class="prop-img">
   ${prop.image 
-    ? `<img src="http://localhost:5000/uploads/${prop.image}" style="width:100%;height:100%;object-fit:cover;">`
+    ? `<img src="${API_BASE.replace('/api','')}/uploads/${prop.image}" style="width:100%;height:100%;object-fit:cover;">`
     : icon('building', 52)
   }
         ${icon('building', 52, 'rgba(201,168,76,0.35)')}
