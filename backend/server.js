@@ -1,4 +1,8 @@
-require("dotenv").config();
+require('dotenv').config({
+  path: process.env.NODE_ENV === 'docker'
+    ? '.env.docker'
+    : '.env.local'
+});
 const express = require("express");
 const cors = require("cors");
 

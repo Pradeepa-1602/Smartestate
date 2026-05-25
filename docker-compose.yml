@@ -1,28 +1,8 @@
 services:
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-
-  backend:
-  build: ./backend
-  container_name: smartestate-backend
-  restart: always
-  ports:
-    - "5000:5000"
-  env_file:
-    - ./backend/.env
-  environment:
-    DB_HOST: mysql
-  depends_on:
-    mysql:
-      condition: service_healthy
-
   mysql:
     image: mysql:8
+    container_name: smartestate-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: Pradeepa@2006
@@ -31,6 +11,29 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: smartestate-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: smartestate-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   mysql_data:
