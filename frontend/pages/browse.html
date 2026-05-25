@@ -176,19 +176,19 @@
   }
 
   try {
-    const res = await fetch("http://http://35.154.242.167:5000/api/enquiries/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        property_id: currentEnquiryProp.property_id,
-        buyer_id: user.user_id,   // ✅ IMPORTANT FIX
-        name,
-        phone,
-        message: msg
-      })
-    });
+    const res = await fetch(`${API_BASE}/enquiries/add`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    property_id: currentEnquiryProp.property_id,
+    buyer_id: user.user_id,
+    name,
+    phone,
+    message: msg
+  })
+});
 
     const data = await res.json();
 

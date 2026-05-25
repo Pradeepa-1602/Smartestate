@@ -2,8 +2,11 @@
    EstateElite — Shared Utilities (utils.js)
    ========================================================= */
 
-const API_BASE = 'http://http://35.154.242.167:5000/api';
-
+const API_BASE =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : `${window.location.origin}/api`;
+    
 /* ── Auth helpers ── */
 const Auth = {
   save(data) { localStorage.setItem('ee_user', JSON.stringify(data)); },

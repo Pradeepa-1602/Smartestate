@@ -147,10 +147,10 @@
     spin.classList.remove('d-none');
 
     try {
-      const res = await fetch('http://http://35.154.242.167:5000/api/properties/add', {
-        method: 'POST',
-        body: formData   // ✅ IMPORTANT
-      });
+      const res = await fetch(`${API_BASE}/properties/add`, {
+  method: 'POST',
+  body: formData
+});
 
       const data = await res.json();
 
