@@ -17,14 +17,18 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
-    container_name: smartestate-backend
-    restart: always
-    ports:
-      - "5000:5000"
-    depends_on:
-      mysql:
-        condition: service_healthy
+  build: ./backend
+  container_name: smartestate-backend
+  restart: always
+  ports:
+    - "5000:5000"
+
+  environment:
+    NODE_ENV: docker
+
+  depends_on:
+    mysql:
+      condition: service_healthy
 
   frontend:
     build: ./frontend

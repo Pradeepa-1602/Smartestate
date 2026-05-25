@@ -173,7 +173,7 @@ function buildPropCard(prop, opts = {}) {
     <div class="prop-card" style="animation-delay:${animDelay * 80}ms">
       <div class="prop-img">
   ${prop.image 
-    ? `<img src="${API_BASE.replace('/api','')}/
+    ? `<img src="${API_BASE.replace('/api','')}
     /${prop.image}" style="width:100%;height:100%;object-fit:cover;">`
     : icon('building', 52)
   }
